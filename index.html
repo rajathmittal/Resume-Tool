@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
-  Parserproof Resume Builder — v2.3  [named versions, summary builder, bullet rephraser, deeper ATS checks]
+  Parserproof Resume Builder — v2.5  [cover letter generator + .txt export]
   Frozen baseline. Audited: OOXML-valid DOCX, ATS-clean structure, embedded fonts, self-contained.
   Single-file, self-contained ATS resume builder. No external dependencies.
   Features: live preview, plain-text (ATS view), readiness meter, keyword match,
@@ -11,7 +11,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Parserproof v2.3 — Type it raw, get a resume every ATS can read</title>
+<title>Parserproof v2.5 — Type it raw, get a resume every ATS can read</title>
 <style>
   /* Embedded fonts (OFL-1.1): Carlito=Calibri-metric, Liberation Serif=Times-metric.
      Self-contained; guarantees identical, italic-complete rendering on every device. */
@@ -85,6 +85,15 @@
   .vs-item .vs-load{color:var(--accent-ink)}
   .vs-item .vs-del{color:var(--danger)}
   .vs-empty{font-size:13px;color:var(--muted);text-align:center;padding:14px}
+  .fit{border:1px solid var(--line);border-radius:11px;padding:13px 14px;margin-bottom:14px;background:#FBFCFD}
+  .fit-top{display:flex;align-items:center;gap:13px}
+  .fit-num{font-size:38px;font-weight:800;line-height:1;font-family:var(--mono)}
+  .fit-lbl{font-size:13px;font-weight:700;color:var(--ink)}
+  .fit-lbl small{font-weight:500;color:var(--muted);font-size:11.5px}
+  .fit-fix{margin-top:10px;font-size:12.5px;color:var(--ink)}
+  .fit-fix ul{margin:5px 0 0;padding-left:17px}
+  .fit-fix li{margin-bottom:3px;color:var(--muted)}
+  .fit-fix.ok{color:var(--accent-ink);font-weight:600}
 
   .wrap{max-width:1320px;margin:0 auto;padding:20px;display:grid;gap:20px;grid-template-columns:1fr}
   @media(min-width:1040px){.wrap{grid-template-columns:minmax(0,1fr) minmax(0,1.02fr);align-items:start}}
@@ -242,6 +251,9 @@
 
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;font-size:13px;font-weight:600;padding:11px 18px;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:.25s;z-index:60;max-width:90vw;text-align:center}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .undobar{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;font-size:13px;font-weight:600;padding:9px 9px 9px 18px;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:.25s;z-index:61;display:flex;align-items:center;gap:14px;max-width:90vw}
+  .undobar.show{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0)}
+  .undobar button{border:none;background:var(--accent);color:#04130c;font-weight:700;font-size:13px;padding:7px 14px;border-radius:8px;cursor:pointer}
   .dlmask{position:fixed;inset:0;background:rgba(20,23,29,.55);z-index:80;display:none;align-items:center;justify-content:center;padding:20px}
   .dlmask.show{display:flex}
   .dlcard{background:#fff;border-radius:16px;max-width:420px;width:100%;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
@@ -260,7 +272,7 @@
   .file-in{display:none}
 
   @media print{
-    .topbar,.col-form,.meter,.tabs,.foot,.plain-note,#paneText,#paneKw,#paneBullets,.toast,.dlmask,#cfPanel,#vsPanel,.pv-bar{display:none!important}
+    .topbar,.col-form,.meter,.tabs,.foot,.plain-note,#paneText,#paneKw,#paneBullets,#paneCover,.toast,.undobar,.dlmask,#cfPanel,#vsPanel,.pv-bar{display:none!important}
     html,body{background:#fff!important}
     .wrap{display:block;padding:0;margin:0;max-width:none}
     .prev-card,.card{border:none;box-shadow:none;border-radius:0;background:#fff}
@@ -279,7 +291,7 @@
   <div class="topbar-in">
     <div class="brand">
       <span class="logo">Parser<span class="scan">proof</span></span>
-      <span class="ver">v2.3</span>
+      <span class="ver">v2.5</span>
       <span class="tagline">Type it raw — get a resume every ATS can read.</span>
     </div>
     <div class="actions">
@@ -408,6 +420,7 @@
         <button class="tab" data-pane="paneText">What the ATS reads</button>
         <button class="tab" data-pane="paneKw">Keyword match</button>
         <button class="tab" data-pane="paneBullets">Bullet check</button>
+        <button class="tab" data-pane="paneCover">Cover letter</button>
       </div>
       <div class="pane active" id="paneResume">
         <div class="pv-bar"><span class="pv-lbl">US Letter · 8.5×11</span><span class="pg" id="pgInfo"></span><span class="pv-seg"><button class="pv-btn active" id="pvFit">Fit width</button><button class="pv-btn" id="pvActual">Actual size</button></span></div>
@@ -415,6 +428,7 @@
       </div>
       <div class="pane" id="paneText">
         <div class="plain-note"><b>This is the plain text a parser extracts.</b> If it reads top-to-bottom in the right order, every ATS can index you.</div>
+        <div class="helper-row" style="margin-bottom:10px"><button type="button" class="mini-btn" id="btnTxt">⬇ Download .txt</button><button type="button" class="mini-btn" id="btnCopy2">Copy text</button></div>
         <div class="plain" id="plain"></div>
       </div>
       <div class="pane" id="paneKw"><div class="kw">
@@ -437,6 +451,20 @@
         </div>
         <div id="bulletRes"></div>
       </div></div>
+      <div class="pane" id="paneCover"><div class="blt">
+        <div class="helper-h" style="font-size:14px;margin-bottom:4px">Cover letter</div>
+        <div class="sub" style="margin-bottom:12px">Fill the gaps and I'll draft a matching letter from your resume. It's a solid starting point — edit it to sound like you before sending.</div>
+        <div class="row two">
+          <div class="field"><label>Company</label><input type="text" id="cl_company" placeholder="BlackRock"></div>
+          <div class="field"><label>Role you're applying for</label><input type="text" id="cl_role" placeholder="Equity Research Associate"></div>
+        </div>
+        <div class="row two">
+          <div class="field"><label>Hiring manager <span style="font-weight:400">(optional)</span></label><input type="text" id="cl_mgr" placeholder="Ms. Rivera"></div>
+          <div class="field"><label>Why this company <span style="font-weight:400">(optional)</span></label><input type="text" id="cl_why" placeholder="your research on emerging markets"></div>
+        </div>
+        <div class="helper-row" style="margin:4px 0 12px"><button type="button" class="mini-btn primary" id="clGen">Generate letter</button><button type="button" class="mini-btn" id="clCopy">Copy</button><button type="button" class="mini-btn" id="clTxt">⬇ .txt</button></div>
+        <textarea id="cl_out" rows="16" placeholder="Your letter will appear here — then edit freely." style="width:100%;font-size:13.5px;line-height:1.6"></textarea>
+      </div></div>
     </div>
     <div class="foot">
       Single-column · standard headings · web-safe fonts · contact in body · no tables, columns, text boxes or graphics.<br>
@@ -446,6 +474,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
+<div class="undobar" id="undoBar"><span id="undoMsg"></span><button id="undoBtn">Undo</button></div>
 <div class="dlmask" id="dlPanel">
   <div class="dlcard">
     <h3 id="dlTitle">Your file is ready</h3>
@@ -522,7 +551,7 @@ function expEditor(item){const d=document.createElement("div");d.className="item
     <div class="field" style="margin-bottom:0"><label>What you did &amp; achieved — one point per line</label>
     <textarea data-k="bullets" rows="4" placeholder="Cut monthly reporting time 40% by automating the pipeline in Python and SQL&#10;Led 3 analysts on a churn model that lifted retention 12%"></textarea>
     <div class="sub">Start each line with an action verb. Include numbers wherever you honestly can.</div></div>`;
-  d.querySelector(".rm").onclick=()=>{S.exp=S.exp.filter(x=>x.id!==item.id);buildExp();render();};
+  d.querySelector(".rm").onclick=()=>{pushUndo("Removed a role");S.exp=S.exp.filter(x=>x.id!==item.id);buildExp();render();};
   d.querySelectorAll("[data-k]").forEach(inp=>{const k=inp.dataset.k;
     if(inp.type==="checkbox"){inp.checked=!!item[k];inp.addEventListener("change",()=>{item[k]=inp.checked;d.querySelector('[data-k="end"]').disabled=inp.checked;render();});}
     else{inp.value=item[k]||"";inp.addEventListener("input",()=>{item[k]=inp.value;render();});}});
@@ -537,7 +566,7 @@ function eduEditor(item){const d=document.createElement("div");d.className="item
     <div class="field"><label>Graduated</label><input type="month" data-k="grad"></div></div>
     <div class="field" style="margin-bottom:0"><label>Details <span style="font-weight:400">(optional — GPA, honors, one per line)</span></label>
     <textarea data-k="details" rows="2" placeholder="GPA 3.8 / 4.0&#10;Dean's List, 2022–2024"></textarea></div>`;
-  d.querySelector(".rm").onclick=()=>{S.edu=S.edu.filter(x=>x.id!==item.id);buildEdu();render();};
+  d.querySelector(".rm").onclick=()=>{pushUndo("Removed education");S.edu=S.edu.filter(x=>x.id!==item.id);buildEdu();render();};
   d.querySelectorAll("[data-k]").forEach(inp=>bindText(inp,item,inp.dataset.k));return d;}
 function buildEdu(){const w=$("#eduList");w.innerHTML="";S.edu.forEach((it,i)=>{const n=eduEditor(it);addReorder(n,S.edu,buildEdu,it,i);w.appendChild(n);});}
 
@@ -546,7 +575,7 @@ function certEditor(item){const d=document.createElement("div");d.className="ite
     <div class="row three"><div class="field"><label>Certification</label><input type="text" data-k="name" placeholder="AWS Certified Solutions Architect"></div>
     <div class="field"><label>Issuer</label><input type="text" data-k="issuer" placeholder="Amazon Web Services"></div>
     <div class="field"><label>Date</label><input type="month" data-k="date"></div></div>`;
-  d.querySelector(".rm").onclick=()=>{S.cert=S.cert.filter(x=>x.id!==item.id);buildCert();render();};
+  d.querySelector(".rm").onclick=()=>{pushUndo("Removed certification");S.cert=S.cert.filter(x=>x.id!==item.id);buildCert();render();};
   d.querySelectorAll("[data-k]").forEach(inp=>bindText(inp,item,inp.dataset.k));return d;}
 function buildCert(){const w=$("#certList");w.innerHTML="";S.cert.forEach((it,i)=>{const n=certEditor(it);addReorder(n,S.cert,buildCert,it,i);w.appendChild(n);});}
 
@@ -556,7 +585,7 @@ function projEditor(item){const d=document.createElement("div");d.className="ite
     <div class="field"><label>Stack / role <span style="font-weight:400">(optional)</span></label><input type="text" data-k="stack" placeholder="Python, Streamlit"></div></div>
     <div class="field" style="margin-bottom:0"><label>Description — one point per line</label>
     <textarea data-k="desc" rows="3" placeholder="Built a model flagging at-risk customers with 89% precision&#10;Deployed a dashboard used weekly by the sales team"></textarea></div>`;
-  d.querySelector(".rm").onclick=()=>{S.proj=S.proj.filter(x=>x.id!==item.id);buildProj();render();};
+  d.querySelector(".rm").onclick=()=>{pushUndo("Removed project");S.proj=S.proj.filter(x=>x.id!==item.id);buildProj();render();};
   d.querySelectorAll("[data-k]").forEach(inp=>bindText(inp,item,inp.dataset.k));return d;}
 function buildProj(){const w=$("#projList");w.innerHTML="";S.proj.forEach((it,i)=>{const n=projEditor(it);addReorder(n,S.proj,buildProj,it,i);w.appendChild(n);});}
 
@@ -566,7 +595,7 @@ function skillGroupEditor(item){const d=document.createElement("div");d.classNam
     <div class="field"><label>Category label</label><input type="text" data-k="label" placeholder="Languages"></div>
     <div class="field" style="margin-bottom:0"><label>Skills — commas or new lines</label>
     <textarea data-k="items" rows="2" placeholder="Python, SQL, JavaScript"></textarea></div>`;
-  d.querySelector(".rm").onclick=()=>{S.skillGroups=S.skillGroups.filter(x=>x.id!==item.id);buildSkillGroups();render();};
+  d.querySelector(".rm").onclick=()=>{pushUndo("Removed skill group");S.skillGroups=S.skillGroups.filter(x=>x.id!==item.id);buildSkillGroups();render();};
   d.querySelectorAll("[data-k]").forEach(inp=>bindText(inp,item,inp.dataset.k));return d;}
 function buildSkillGroups(){const w=$("#skillGroupList");w.innerHTML="";S.skillGroups.forEach((it,i)=>{const n=skillGroupEditor(it);addReorder(n,S.skillGroups,buildSkillGroups,it,i);w.appendChild(n);});}
 function syncSkillMode(){const grouped=S.skillMode==="grouped";
@@ -671,24 +700,22 @@ function renderChecks(){
   $("#checks").innerHTML=C.map(c=>`<span class="chkpill ${c[1]?'ok':'no'}"><span class="d"></span>${c[0]}</span>`).join("");
   renderAtsTips();}
 function mIdx(v){if(!v)return 0;const p=String(v).split("-");const y=parseInt(p[0],10),m=parseInt(p[1]||"1",10);return (y>0)?y*12+(m-1):0;}
-function renderAtsTips(){const el=$("#atsTips");if(!el)return;const tips=[];
-  // contact validity
+function computeAtsTips(){const tips=[];
   if(S.email.trim()&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(S.email.trim()))tips.push("Email doesn’t look valid — ATS may fail to capture it.");
   if(S.phone.trim()&&(S.phone.replace(/\D/g,"").length<7))tips.push("Phone number looks incomplete — include the full number with area/country code.");
-  // missing dates
-  const expNoDate=S.exp.some(e=>(e.role||e.company)&&(!e.start||(!e.current&&!e.end)));
-  if(expNoDate)tips.push("A role is missing start/end dates — ATS and recruiters expect “Month YYYY” for each.");
-  const eduNoDate=S.edu.some(e=>(e.degree||e.school)&&!e.grad);
-  if(eduNoDate)tips.push("An education entry has no graduation date.");
-  // employment gaps
+  if(S.exp.some(e=>(e.role||e.company)&&(!e.start||(!e.current&&!e.end))))tips.push("A role is missing start/end dates — ATS and recruiters expect “Month YYYY” for each.");
+  if(S.edu.some(e=>(e.degree||e.school)&&!e.grad))tips.push("An education entry has no graduation date.");
   const dated=S.exp.filter(e=>(e.role||e.company)&&e.start).map(e=>({s:mIdx(e.start),e:e.current?99999:mIdx(e.end),r:e.role||e.company})).filter(x=>x.s);
   dated.sort((a,b)=>b.s-a.s);
   for(let i=0;i<dated.length-1;i++){const nw=dated[i],od=dated[i+1];if(od.e&&od.e!==99999&&nw.s-od.e>3){tips.push("~"+(nw.s-od.e)+"-month gap between “"+od.r+"” and “"+nw.r+"” — be ready to explain or fill it.");break;}}
-  // acronyms
   const txt=[S.summary,...S.exp.map(e=>e.bullets||"")].join(" ");
   if(/\b[A-Z]{2,5}\b/.test(txt)&&!/\([A-Za-z][a-z]/.test(txt))tips.push("Spell out each acronym once, e.g. “ROI (return on investment)” — ATS keyword-match on both forms.");
-  // long summary
   if(S.summary.trim().split(/\s+/).filter(Boolean).length>90)tips.push("Summary is long — 2–4 lines reads best and keeps the page tight.");
+  return tips;}
+function bulletStats(){const all=[];S.exp.forEach(e=>lines(e.bullets).forEach(b=>all.push(analyzeBullet(b))));S.proj.forEach(p=>lines(p.desc).forEach(b=>all.push(analyzeBullet(b))));
+  const total=all.length,strong=all.filter(a=>a.rating==="strong").length;return{total,strong,pct:total?Math.round(strong/total*100):0};}
+function pageEstimate(){const sh=$("#sheet");if(!sh)return 1;const used=Math.max(0,sh.offsetHeight-144);return Math.max(1,Math.ceil(used/912));}
+function renderAtsTips(){const el=$("#atsTips");if(!el)return;const tips=computeAtsTips();
   if(!tips.length){el.innerHTML='<div class="ats-tip ok">✓ No ATS red flags — dates, contact, and formatting look clean.</div>';}
   else el.innerHTML=tips.slice(0,6).map(t=>`<div class="ats-tip">${esc(t)}</div>`).join("");}
 
@@ -763,7 +790,7 @@ const AKEY="parserproof_autosave_v2";
 const LS=(()=>{try{localStorage.setItem("__pp","1");localStorage.removeItem("__pp");return true;}catch(e){return false;}})();
 let asT=null;
 function setSaved(txt,on){const el=$("#saveStat");if(!el)return;el.textContent=txt||"";el.classList.toggle("on",!!on);}
-function autosave(){if(!LS)return;clearTimeout(asT);asT=setTimeout(()=>{try{localStorage.setItem(AKEY,JSON.stringify({_v:"2.3",t:Date.now(),s:S}));setSaved("✓ Auto-saved",true);}catch(e){}},600);}
+function autosave(){if(!LS)return;clearTimeout(asT);asT=setTimeout(()=>{try{localStorage.setItem(AKEY,JSON.stringify({_v:"2.5",t:Date.now(),s:S}));setSaved("✓ Auto-saved",true);}catch(e){}},600);}
 function clearAutosave(){if(!LS)return;clearTimeout(asT);try{localStorage.removeItem(AKEY);}catch(e){}setSaved("Auto-save on",false);}
 function restoreAutosave(){if(!LS)return false;let raw;try{raw=localStorage.getItem(AKEY);}catch(e){return false;}if(!raw)return false;
   let o;try{o=JSON.parse(raw);}catch(e){return false;}const d=o&&o.s;if(!d)return false;
@@ -805,7 +832,22 @@ function scanKeywords(){const jd=$("#jd").value.trim(),out=$("#kwRes");
   const cov=picked.length?Math.round(have.length/picked.length*100):0;
   const stuffed=have.filter(k=>!k.includes(" ")&&countOcc(resumeText,k)>=5).sort((a,b)=>countOcc(resumeText,b)-countOcc(resumeText,a));
   const warn=stuffed.length?`<div class="kw-warn">Possible over-use: ${stuffed.slice(0,3).map(k=>`<b>${esc(k)}</b> (${countOcc(resumeText,k)}×)`).join(", ")}. Repeating a term doesn't raise your rank — parsers count presence, and recruiters notice padding. Keep it natural.</div>`:"";
-  out.innerHTML=`<div class="kw-cov"><span class="big" style="color:${cov>=70?'var(--accent-ink)':cov>=45?'var(--warn)':'var(--danger)'}">${cov}%</span>
+  // ---- job-fit score: keywords + bullet strength + length + ATS flags ----
+  const bs=bulletStats(),pages=pageEstimate();
+  const used=$("#sheet")?Math.max(0,$("#sheet").offsetHeight-144):912,over=used-912;
+  const lenScore=pages<=1?100:(over<=170?80:(pages===2?60:35));
+  const atsN=computeAtsTips().length,atsScore=Math.max(0,100-atsN*15);
+  const fit=Math.round(0.40*cov+0.30*bs.pct+0.15*lenScore+0.15*atsScore);
+  const fixes=[];
+  if(cov<70)fixes.push(`Raise keyword coverage (now ${cov}%) — add relevant missing terms below.`);
+  if(bs.total&&bs.pct<60)fixes.push(`Strengthen bullets (now ${bs.pct}% strong) — use the builder on the Bullet check tab.`);
+  if(!bs.total)fixes.push("Add quantified bullet points under your roles.");
+  if(pages>1)fixes.push(`Trim to one page (currently ~${pages} pages).`);
+  if(atsN)fixes.push(`Fix ${atsN} ATS flag${atsN>1?"s":""} under the readiness meter.`);
+  const fitCol=fit>=75?'var(--accent-ink)':fit>=50?'var(--warn)':'var(--danger)';
+  const fitHtml=`<div class="fit"><div class="fit-top"><span class="fit-num" style="color:${fitCol}">${fit}</span><span class="fit-lbl">Job-fit score<br><small>keywords ${cov}% · bullets ${bs.pct}% · length ${pages<=1?'1pg':'~'+pages+'pg'} · ATS ${atsN?atsN+' flag'+(atsN>1?'s':''):'clean'}</small></span></div>`+
+    (fixes.length?`<div class="fit-fix"><b>To raise it:</b><ul>${fixes.map(f=>`<li>${esc(f)}</li>`).join("")}</ul></div>`:`<div class="fit-fix ok">Strong fit — this resume is well-aligned to the posting.</div>`)+`</div>`;
+  out.innerHTML=fitHtml+`<div class="kw-cov"><span class="big" style="color:${cov>=70?'var(--accent-ink)':cov>=45?'var(--warn)':'var(--danger)'}">${cov}%</span>
     <span class="lbl">of the posting's key terms appear in your resume<br>(${have.length} of ${picked.length} matched)</span></div>
     ${warn}
     <div class="kw-grp"><h4>✓ Matched (${have.length})</h4><div class="kw-tags">${have.length?have.map(k=>`<span class="kw-tag have">${esc(k)}</span>`).join(""):'<span class="sub">none yet</span>'}</div></div>
@@ -843,14 +885,19 @@ $("#btnCopy").onclick=async()=>{const txt=buildPlain();
   try{await navigator.clipboard.writeText(txt);toast("Plain text copied to clipboard");}
   catch(e){const ta=document.createElement("textarea");ta.value=txt;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.focus();ta.select();
     try{document.execCommand("copy");toast("Plain text copied");}catch(_){toast("Couldn't copy — switch to the “What the ATS reads” tab and copy manually");}ta.remove();}};
-$("#btnSave").onclick=()=>{downloadBlob(new Blob([JSON.stringify({_app:"parserproof",_v:"2.3",...S},null,2)],{type:"application/json"}),(fileBase()||"resume")+"-draft.json",{title:"Draft ready",msg:"Tap to save your draft (a .json file you can re-open later)."});};
+$("#btnSave").onclick=()=>{downloadBlob(new Blob([JSON.stringify({_app:"parserproof",_v:"2.5",...S},null,2)],{type:"application/json"}),(fileBase()||"resume")+"-draft.json",{title:"Draft ready",msg:"Tap to save your draft (a .json file you can re-open later)."});};
 let cfFn=null;
 function confirmAction(title,msg,okLabel,onOk){$("#cfTitle").textContent=title;$("#cfMsg").textContent=msg;$("#cfOk").textContent=okLabel||"Confirm";cfFn=onOk;$("#cfPanel").classList.add("show");}
 function closeConfirm(){$("#cfPanel").classList.remove("show");cfFn=null;}
 $("#cfCancel").onclick=closeConfirm;
 $("#cfPanel").addEventListener("click",e=>{if(e.target.id==="cfPanel")closeConfirm();});
 $("#cfOk").onclick=()=>{const f=cfFn;closeConfirm();if(f)f();};
+let undoSnap=null,undoBarT=null;
+function pushUndo(label){undoSnap={s:JSON.parse(JSON.stringify(S))};const b=$("#undoBar");if(!b)return;$("#undoMsg").textContent=label;b.classList.add("show");clearTimeout(undoBarT);undoBarT=setTimeout(()=>{b.classList.remove("show");undoSnap=null;},8000);}
+function doUndo(){if(!undoSnap)return;Object.assign(S,undoSnap.s);["skillGroups","exp","edu","cert","proj"].forEach(k=>{if(!Array.isArray(S[k]))S[k]=[];});syncInputs();buildExp();buildEdu();buildCert();buildProj();buildSkillGroups();syncSkillMode();render();undoSnap=null;clearTimeout(undoBarT);if($("#undoBar"))$("#undoBar").classList.remove("show");toast("Undone");}
+if($("#undoBtn"))$("#undoBtn").onclick=doUndo;
 function resetAll(){
+  pushUndo("Reset — cleared everything");
   Object.assign(S,{name:"",title:"",email:"",phone:"",loc:"",linkedin:"",web:"",font:"Calibri",accent:"black",template:"classic",summary:"",skills:"",skillMode:"flat",skillGroups:[],exp:[],edu:[],cert:[],proj:[]});
   if($("#jd"))$("#jd").value="";
   if($("#kwRes"))$("#kwRes").innerHTML='<div class="sub">Paste a job posting above, then scan.</div>';
@@ -1034,6 +1081,28 @@ $("#vsSave").onclick=()=>{if(!LS){toast("Open your hosted site to save versions"
 $("#vsList").addEventListener("click",e=>{const ld=e.target.closest(".vs-load"),dl=e.target.closest(".vs-del");
   if(ld){const v=vsLoadAll().find(x=>x.id===ld.dataset.id);if(v&&v.s){Object.assign(S,v.s);["skillGroups","exp","edu","cert","proj"].forEach(k=>{if(!Array.isArray(S[k]))S[k]=[];});syncInputs();buildExp();buildEdu();buildCert();buildProj();buildSkillGroups();syncSkillMode();render();$("#vsPanel").classList.remove("show");toast("Loaded: "+v.name);}}
   else if(dl){const v=vsLoadAll().find(x=>x.id===dl.dataset.id);confirmAction("Delete this version?","“"+(v?v.name:"")+"” will be removed. This can’t be undone.","Delete",()=>{vsStoreAll(vsLoadAll().filter(x=>x.id!==dl.dataset.id));vsRender();toast("Deleted");});}});
+
+/* ---- plain .txt export + cover letter ---- */
+const lcFirst=s=>s?s.charAt(0).toLowerCase()+s.slice(1):s;
+function dlText(text,base){downloadBlob(new Blob([text],{type:"text/plain;charset=utf-8"}),(base||fileBase()||"resume")+".txt",{title:"Text file ready",msg:"Tap to save the plain-text version."});}
+$("#btnTxt").onclick=()=>dlText(buildPlain());
+$("#btnCopy2").onclick=()=>copyText(buildPlain());
+function strongestBullet(){let best=null,bestScore=-1;S.exp.forEach(e=>lines(e.bullets).forEach(b=>{const a=analyzeBullet(b);const sc=(a.hasMetric?2:0)+(a.strongVerb?1:0)-(a.rating==="weak"?1:0);if(sc>bestScore){bestScore=sc;best=b;}}));return best;}
+function clCompose(){
+  const company=$("#cl_company").value.trim(),role=$("#cl_role").value.trim()||S.title||"the role",mgr=$("#cl_mgr").value.trim(),why=$("#cl_why").value.trim();
+  const skills=allSkills().slice(0,4).join(", "),proof=strongestBullet();
+  const greet=mgr?("Dear "+mgr+","):"Dear Hiring Team,";
+  let p1=`I'm writing to express my strong interest in the ${role} position${company?" at "+company:""}.`+(S.title?` As a ${S.title}, I believe my background is a close match for what your team needs.`:"");
+  let p2="";
+  if(proof)p2=`In my recent work, I ${lcFirst(proof.trim().replace(/\.$/,""))}.`;
+  if(skills)p2+=(p2?" ":"")+`I bring hands-on strength in ${skills}, with a focus on turning that into measurable results.`;
+  if(!p2)p2="I bring a track record of delivering measurable results and would welcome the chance to do the same for your team.";
+  const p3=`I'm especially drawn to ${company||"your team"}`+(why?` because of ${why}`:"")+`, and I would welcome the opportunity to discuss how I can contribute.`;
+  const close=`Thank you for your time and consideration.\n\nSincerely,\n${S.name||"Your Name"}`;
+  return [greet,"",p1,"",p2,"",p3,"",close].join("\n");}
+$("#clGen").onclick=()=>{$("#cl_out").value=clCompose();toast("Draft ready — edit it to sound like you");};
+$("#clCopy").onclick=()=>{const t=$("#cl_out").value.trim()||clCompose();copyText(t);};
+$("#clTxt").onclick=()=>{const t=$("#cl_out").value.trim()||clCompose();dlText(t,(fileBase()||"cover")+"-cover-letter");};
 
 /* ---- init ---- */
 if(restoreAutosave()){
