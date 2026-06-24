@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
-  Parserproof Resume Builder — v1.4  [STABLE BASE RELEASE]
+  Parserproof Resume Builder — v2.0  [ATS-safe template presets]
   Frozen baseline. Audited: OOXML-valid DOCX, ATS-clean structure, embedded fonts, self-contained.
   Single-file, self-contained ATS resume builder. No external dependencies.
   Features: live preview, plain-text (ATS view), readiness meter, keyword match,
@@ -11,7 +11,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Parserproof v1.4 — Type it raw, get a resume every ATS can read</title>
+<title>Parserproof v2.0 — Type it raw, get a resume every ATS can read</title>
 <style>
   /* Embedded fonts (OFL-1.1): Carlito=Calibri-metric, Liberation Serif=Times-metric.
      Self-contained; guarantees identical, italic-complete rendering on every device. */
@@ -82,6 +82,10 @@
   .item{border:1px solid var(--line);border-radius:11px;padding:14px;margin-bottom:12px;background:#FBFCFD;position:relative}
   .item .rm{position:absolute;top:10px;right:10px;border:1px solid var(--line);background:#fff;color:var(--muted);width:26px;height:26px;border-radius:7px;font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center}
   .item .rm:hover{color:var(--danger);border-color:#f0caca;background:#fdf3f3}
+  .itemctl{position:absolute;top:10px;right:44px;display:flex;gap:6px}
+  .itemctl .mv{border:1px solid var(--line);background:#fff;color:var(--muted);width:26px;height:26px;border-radius:7px;font-size:14px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .itemctl .mv:hover:not(:disabled){color:var(--accent-ink);border-color:#cfe9da;background:var(--accent-soft)}
+  .itemctl .mv:disabled{opacity:.35;cursor:default}
   .add{width:100%;border:1.5px dashed var(--line);background:#fff;color:var(--accent-ink);font-weight:600;font-size:13px;padding:10px;border-radius:10px;transition:.13s}
   .add:hover{border-color:var(--accent);background:var(--accent-soft)}
   .chk{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted);font-weight:600;cursor:pointer}
@@ -110,8 +114,17 @@
   .pane.active{display:block}
   @media(max-width:1039px){.pane{max-height:none}}
 
-  .sheet-wrap{background:#DDE1E6;padding:18px;display:flex;justify-content:center}
-  .sheet{background:#fff;width:100%;max-width:680px;padding:46px 52px;box-shadow:0 2px 14px rgba(0,0,0,.12);color:#111;font-size:13px;line-height:1.42}
+  .pv-bar{display:flex;gap:0;align-items:center;justify-content:flex-end;padding:8px 12px;background:#EEF1F4;border-bottom:1px solid var(--line2)}
+  .pv-bar .pv-lbl{font-size:11.5px;color:var(--muted)}
+  .pg{margin-right:auto;font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px}
+  .pg.good{background:var(--accent-soft);color:var(--accent-ink)}
+  .pg.warn{background:#fdf6e9;color:#8a5a16}
+  .pv-seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;padding:3px;background:#fff}
+  .pv-btn{border:none;background:transparent;color:var(--muted);font-size:12px;font-weight:600;padding:5px 11px;border-radius:6px;cursor:pointer}
+  .pv-btn.active{background:var(--accent-soft);color:var(--accent-ink)}
+  .sheet-wrap{background:#DDE1E6;padding:14px;display:block;overflow:auto;-webkit-overflow-scrolling:touch}
+  .sheet-stage{position:relative;margin:0 auto}
+  .sheet{position:absolute;top:0;left:0;background:#fff;width:816px;min-height:1056px;padding:72px;box-shadow:0 2px 14px rgba(0,0,0,.18);color:#111;font-size:13.5px;line-height:1.42;transform-origin:top left;transform:scale(var(--pv,1))}
   .sheet[data-font="Calibri"]{font-family:Calibri,'PPSans',"Segoe UI",Roboto,sans-serif}
   .sheet[data-font="Arial"]{font-family:Arial,'PPSans',"Helvetica Neue",Roboto,sans-serif}
   .sheet[data-font="Georgia"]{font-family:Georgia,'PPSerif',"Times New Roman",Times,serif}
@@ -123,6 +136,18 @@
   .r-contact{font-size:12px;color:#222;margin:0 0 4px}
   .r-sec{margin-top:17px}
   .r-sec h3{font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin:0 0 7px;padding-bottom:3px;border-bottom:1px solid #444}
+  /* template presets (all single-column, standard headers) */
+  .sheet[data-template="classic"] .r-name,.sheet[data-template="classic"] .r-title,.sheet[data-template="classic"] .r-contact{text-align:center}
+  .sheet[data-template="classic"] .r-name{font-size:25px;letter-spacing:0}
+  .sheet[data-template="modern"] .r-name{font-size:23px}
+  .sheet[data-template="minimal"] .r-name{font-size:23px;font-weight:800}
+  .sheet[data-template="minimal"] .r-sec h3{text-transform:none;border-bottom:none;letter-spacing:.01em;font-size:13.5px;margin-bottom:4px}
+  .sheet[data-template="compact"] .r-name{font-size:20px}
+  .sheet[data-template="compact"] .r-sec{margin-top:11px}
+  .sheet[data-template="compact"] .r-sec h3{margin-bottom:5px;padding-bottom:2px}
+  .sheet[data-template="compact"] .r-job{margin-bottom:7px}
+  .sheet[data-template="compact"] .r-job li{margin-bottom:1px}
+  .sheet[data-template="compact"] .r-job ul{margin-top:3px}
   .r-job{margin-bottom:11px}
   .r-job .l1{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
   .r-job .role{font-weight:700;font-size:13px}
@@ -154,7 +179,34 @@
   .kw-tags{display:flex;flex-wrap:wrap;gap:6px}
   .kw-tag{font-size:12px;font-weight:600;padding:4px 10px;border-radius:7px;border:1px solid}
   .kw-tag.have{background:var(--accent-soft);border-color:#d3eede;color:var(--accent-ink)}
-  .kw-tag.miss{background:#fff;border-color:var(--line);color:var(--muted)}
+  .kw-tag.miss{background:#fff;border-color:var(--line);color:var(--muted);cursor:pointer;transition:.12s}
+  .kw-tag.miss:hover{border-color:#cfe9da;background:var(--accent-soft);color:var(--accent-ink)}
+  .kw-tag.miss::after{content:" +";font-weight:700;opacity:.6}
+  .kw-warn{margin:4px 0 14px;font-size:12px;background:#FFF7ED;border:1px solid #f3d9b0;color:#8a5a16;padding:9px 11px;border-radius:8px}
+  .blt{padding:16px}
+  .blt-sum{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+  .blt-stat{font-size:12px;font-weight:600;padding:5px 11px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink)}
+  .blt-stat b{font-family:var(--mono)}
+  .blt-stat.good{background:var(--accent-soft);border-color:#cfe9da;color:var(--accent-ink)}
+  .blt-stat.bad{background:#fdf3f3;border-color:#f0caca;color:var(--danger)}
+  .blt-src{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:14px 0 7px}
+  .blt-row{border:1px solid var(--line);border-left:3px solid var(--line);border-radius:9px;padding:10px 12px;margin-bottom:9px;background:#fff}
+  .blt-row.strong{border-left-color:var(--accent)}
+  .blt-row.ok{border-left-color:var(--warn)}
+  .blt-row.weak{border-left-color:var(--danger)}
+  .blt-top{display:flex;gap:9px;align-items:flex-start}
+  .blt-badge{flex:none;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:3px 8px;border-radius:6px;margin-top:1px}
+  .blt-badge.strong{background:var(--accent-soft);color:var(--accent-ink)}
+  .blt-badge.ok{background:#fdf6e9;color:#8a5a16}
+  .blt-badge.weak{background:#fdecec;color:var(--danger)}
+  .blt-text{font-size:13px;line-height:1.4;color:var(--ink)}
+  .blt-tips{margin:7px 0 0;padding-left:16px}
+  .blt-tips li{font-size:12px;color:var(--muted);margin-bottom:2px}
+  .blt-good{font-size:12px;color:var(--accent-ink);margin-top:5px}
+  .blt-vv{font-size:12px;border-radius:8px;padding:9px 11px;margin:2px 0 14px;line-height:1.5}
+  .blt-vv.warn{background:#FFF7ED;border:1px solid #f3d9b0;color:#8a5a16}
+  .blt-vv.good{background:var(--accent-soft);border:1px solid #cfe9da;color:var(--accent-ink)}
+  .blt-vv b{color:var(--ink)}
 
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;font-size:13px;font-weight:600;padding:11px 18px;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:.25s;z-index:60;max-width:90vw;text-align:center}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -168,19 +220,22 @@
   .dlhint{margin:13px 0 0;font-size:12px;color:var(--muted);line-height:1.5;background:var(--chip);border-radius:9px;padding:10px 12px}
   .dlhint b{color:var(--ink)}
   .dlclose{margin-top:12px;width:100%;border:1px solid var(--line);background:#fff;color:var(--muted);font-weight:600;font-size:13px;padding:9px;border-radius:9px}
+  .dldanger{display:flex;align-items:center;justify-content:center;width:100%;background:var(--danger);color:#fff;font-weight:700;font-size:14.5px;padding:13px;border-radius:11px;border:none;cursor:pointer;transition:.13s}
+  .dldanger:hover{filter:brightness(.94)}
 
   .foot{font-size:11.5px;color:var(--muted);text-align:center;padding:8px 20px 30px;line-height:1.6}
   .foot b{color:var(--ink)}
   .file-in{display:none}
 
   @media print{
-    .topbar,.col-form,.meter,.tabs,.foot,.plain-note,#paneText,#paneKw,.toast,.dlmask{display:none!important}
+    .topbar,.col-form,.meter,.tabs,.foot,.plain-note,#paneText,#paneKw,#paneBullets,.toast,.dlmask,#cfPanel,.pv-bar{display:none!important}
     html,body{background:#fff!important}
     .wrap{display:block;padding:0;margin:0;max-width:none}
     .prev-card,.card{border:none;box-shadow:none;border-radius:0;background:#fff}
     .pane{max-height:none;overflow:visible}
-    .sheet-wrap{background:#fff!important;padding:0;display:block}
-    .sheet{box-shadow:none;max-width:none;width:auto;padding:0;font-size:11pt;color:#000}
+    .sheet-wrap{background:#fff!important;padding:0;display:block;overflow:visible}
+    .sheet-stage{width:auto!important;height:auto!important;margin:0}
+    .sheet{position:static;box-shadow:none;max-width:none;width:auto;min-height:0;padding:0;font-size:11pt;color:#000;transform:none!important}
     .col-prev{position:static}
     @page{margin:0.7in 0.75in}
   }
@@ -192,7 +247,7 @@
   <div class="topbar-in">
     <div class="brand">
       <span class="logo">Parser<span class="scan">proof</span></span>
-      <span class="ver">v1.4</span>
+      <span class="ver">v2.0</span>
       <span class="tagline">Type it raw — get a resume every ATS can read.</span>
     </div>
     <div class="actions">
@@ -200,6 +255,7 @@
       <button class="btn ghost" id="btnExample">Load example</button>
       <button class="btn ghost" id="btnLoad">Open draft</button>
       <button class="btn ghost" id="btnSave">Save draft</button>
+      <button class="btn ghost" id="btnReset">Reset</button>
       <button class="btn" id="btnCopy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>Copy text</button>
       <button class="btn" id="btnPdf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h9l5 5v12a1 1 0 0 1-1 1H7"/><path d="M6 14h12M6 18h12"/></svg>PDF</button>
       <button class="btn primary" id="btnDocx"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Download .docx</button>
@@ -225,6 +281,8 @@
           <div class="field"><label>LinkedIn <span style="font-weight:400">(optional)</span></label><input type="text" id="f_linkedin" placeholder="linkedin.com/in/jordanavery"></div>
           <div class="field"><label>Website <span style="font-weight:400">(optional)</span></label><input type="text" id="f_web" placeholder="jordanavery.dev"></div>
         </div>
+        <div class="field"><label>Template <span style="font-weight:400">(all single-column &amp; ATS-safe)</span></label>
+          <select id="f_template"><option value="classic">Classic — serif, centered name, ruled headings</option><option value="modern">Modern — sans, navy accent, ruled headings</option><option value="minimal">Minimal — sans, clean headings, no rules</option><option value="compact">Compact — sans, tight spacing, fits more</option></select></div>
         <div class="row two">
           <div class="field" style="margin-bottom:0"><label>Resume font <span style="font-weight:400">(all ATS-safe)</span></label>
             <select id="f_font"><option>Calibri</option><option>Arial</option><option>Georgia</option><option>Times New Roman</option></select></div>
@@ -292,8 +350,12 @@
         <button class="tab active" data-pane="paneResume">Resume</button>
         <button class="tab" data-pane="paneText">What the ATS reads</button>
         <button class="tab" data-pane="paneKw">Keyword match</button>
+        <button class="tab" data-pane="paneBullets">Bullet check</button>
       </div>
-      <div class="pane active" id="paneResume"><div class="sheet-wrap"><div class="sheet" id="sheet" data-font="Calibri"></div></div></div>
+      <div class="pane active" id="paneResume">
+        <div class="pv-bar"><span class="pv-lbl">US Letter · 8.5×11</span><span class="pg" id="pgInfo"></span><span class="pv-seg"><button class="pv-btn active" id="pvFit">Fit width</button><button class="pv-btn" id="pvActual">Actual size</button></span></div>
+        <div class="sheet-wrap"><div class="sheet-stage" id="sheetStage"><div class="sheet" id="sheet" data-font="Calibri"></div></div></div>
+      </div>
       <div class="pane" id="paneText">
         <div class="plain-note"><b>This is the plain text a parser extracts.</b> If it reads top-to-bottom in the right order, every ATS can index you.</div>
         <div class="plain" id="plain"></div>
@@ -304,6 +366,7 @@
         <button class="tool" id="scanKw" style="margin-top:10px">Scan for keywords</button>
         <div class="kw-res" id="kwRes"></div>
       </div></div>
+      <div class="pane" id="paneBullets"><div class="blt"><div id="bulletRes"></div></div></div>
     </div>
     <div class="foot">
       Single-column · standard headings · web-safe fonts · contact in body · no tables, columns, text boxes or graphics.<br>
@@ -323,9 +386,25 @@
   </div>
 </div>
 
+<div class="dlmask" id="cfPanel">
+  <div class="dlcard">
+    <h3 id="cfTitle">Are you sure?</h3>
+    <p id="cfMsg"></p>
+    <button class="dldanger" id="cfOk">Confirm</button>
+    <button class="dlclose" id="cfCancel">Cancel</button>
+  </div>
+</div>
+
 <script>
 "use strict";
-const S={name:"",title:"",email:"",phone:"",loc:"",linkedin:"",web:"",font:"Calibri",accent:"black",summary:"",skills:"",skillMode:"flat",skillGroups:[],exp:[],edu:[],cert:[],proj:[]};
+const S={name:"",title:"",email:"",phone:"",loc:"",linkedin:"",web:"",font:"Calibri",accent:"black",template:"classic",summary:"",skills:"",skillMode:"flat",skillGroups:[],exp:[],edu:[],cert:[],proj:[]};
+const TPL={
+  classic:{font:"Georgia",accent:"black",align:"center",upper:true,rule:true,compact:false,nameSz:21},
+  modern:{font:"Calibri",accent:"navy",align:"left",upper:true,rule:true,compact:false,nameSz:20},
+  minimal:{font:"Arial",accent:"black",align:"left",upper:false,rule:false,compact:false,nameSz:20},
+  compact:{font:"Calibri",accent:"black",align:"left",upper:true,rule:true,compact:true,nameSz:18}
+};
+const TP=()=>TPL[S.template]||TPL.classic;
 const uid=()=>Math.random().toString(36).slice(2,9);
 const $=s=>document.querySelector(s);
 const esc=s=>(s||"").replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -343,6 +422,15 @@ function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("show"
 
 /* ---- list editors ---- */
 function bindText(el,obj,key){el.value=obj[key]||"";el.addEventListener("input",()=>{obj[key]=el.value;render();});}
+function moveInArr(arr,id,dir){const i=arr.findIndex(x=>x.id===id);if(i<0)return;const j=i+dir;if(j<0||j>=arr.length)return;const t=arr[i];arr[i]=arr[j];arr[j]=t;}
+function addReorder(node,arr,rebuild,item,i){
+  const wrap=document.createElement("div");wrap.className="itemctl";
+  const up=document.createElement("button");up.type="button";up.className="mv";up.title="Move up";up.innerHTML="&#8593;";up.disabled=i<=0;
+  const dn=document.createElement("button");dn.type="button";dn.className="mv";dn.title="Move down";dn.innerHTML="&#8595;";dn.disabled=i>=arr.length-1;
+  up.onclick=()=>{moveInArr(arr,item.id,-1);rebuild();render();};
+  dn.onclick=()=>{moveInArr(arr,item.id,1);rebuild();render();};
+  wrap.appendChild(up);wrap.appendChild(dn);node.appendChild(wrap);
+}
 function expEditor(item){const d=document.createElement("div");d.className="item";
   d.innerHTML=`<button class="rm" title="Remove">&times;</button>
     <div class="row two"><div class="field"><label>Job title</label><input type="text" data-k="role" placeholder="Data Analyst"></div>
@@ -359,7 +447,7 @@ function expEditor(item){const d=document.createElement("div");d.className="item
     if(inp.type==="checkbox"){inp.checked=!!item[k];inp.addEventListener("change",()=>{item[k]=inp.checked;d.querySelector('[data-k="end"]').disabled=inp.checked;render();});}
     else{inp.value=item[k]||"";inp.addEventListener("input",()=>{item[k]=inp.value;render();});}});
   d.querySelector('[data-k="end"]').disabled=!!item.current;return d;}
-function buildExp(){const w=$("#expList");w.innerHTML="";S.exp.forEach(it=>w.appendChild(expEditor(it)));}
+function buildExp(){const w=$("#expList");w.innerHTML="";S.exp.forEach((it,i)=>{const n=expEditor(it);addReorder(n,S.exp,buildExp,it,i);w.appendChild(n);});}
 
 function eduEditor(item){const d=document.createElement("div");d.className="item";
   d.innerHTML=`<button class="rm" title="Remove">&times;</button>
@@ -371,7 +459,7 @@ function eduEditor(item){const d=document.createElement("div");d.className="item
     <textarea data-k="details" rows="2" placeholder="GPA 3.8 / 4.0&#10;Dean's List, 2022–2024"></textarea></div>`;
   d.querySelector(".rm").onclick=()=>{S.edu=S.edu.filter(x=>x.id!==item.id);buildEdu();render();};
   d.querySelectorAll("[data-k]").forEach(inp=>bindText(inp,item,inp.dataset.k));return d;}
-function buildEdu(){const w=$("#eduList");w.innerHTML="";S.edu.forEach(it=>w.appendChild(eduEditor(it)));}
+function buildEdu(){const w=$("#eduList");w.innerHTML="";S.edu.forEach((it,i)=>{const n=eduEditor(it);addReorder(n,S.edu,buildEdu,it,i);w.appendChild(n);});}
 
 function certEditor(item){const d=document.createElement("div");d.className="item";
   d.innerHTML=`<button class="rm" title="Remove">&times;</button>
@@ -380,7 +468,7 @@ function certEditor(item){const d=document.createElement("div");d.className="ite
     <div class="field"><label>Date</label><input type="month" data-k="date"></div></div>`;
   d.querySelector(".rm").onclick=()=>{S.cert=S.cert.filter(x=>x.id!==item.id);buildCert();render();};
   d.querySelectorAll("[data-k]").forEach(inp=>bindText(inp,item,inp.dataset.k));return d;}
-function buildCert(){const w=$("#certList");w.innerHTML="";S.cert.forEach(it=>w.appendChild(certEditor(it)));}
+function buildCert(){const w=$("#certList");w.innerHTML="";S.cert.forEach((it,i)=>{const n=certEditor(it);addReorder(n,S.cert,buildCert,it,i);w.appendChild(n);});}
 
 function projEditor(item){const d=document.createElement("div");d.className="item";
   d.innerHTML=`<button class="rm" title="Remove">&times;</button>
@@ -390,7 +478,7 @@ function projEditor(item){const d=document.createElement("div");d.className="ite
     <textarea data-k="desc" rows="3" placeholder="Built a model flagging at-risk customers with 89% precision&#10;Deployed a dashboard used weekly by the sales team"></textarea></div>`;
   d.querySelector(".rm").onclick=()=>{S.proj=S.proj.filter(x=>x.id!==item.id);buildProj();render();};
   d.querySelectorAll("[data-k]").forEach(inp=>bindText(inp,item,inp.dataset.k));return d;}
-function buildProj(){const w=$("#projList");w.innerHTML="";S.proj.forEach(it=>w.appendChild(projEditor(it)));}
+function buildProj(){const w=$("#projList");w.innerHTML="";S.proj.forEach((it,i)=>{const n=projEditor(it);addReorder(n,S.proj,buildProj,it,i);w.appendChild(n);});}
 
 /* ---- skills: categorized mode ---- */
 function skillGroupEditor(item){const d=document.createElement("div");d.className="item";
@@ -400,7 +488,7 @@ function skillGroupEditor(item){const d=document.createElement("div");d.classNam
     <textarea data-k="items" rows="2" placeholder="Python, SQL, JavaScript"></textarea></div>`;
   d.querySelector(".rm").onclick=()=>{S.skillGroups=S.skillGroups.filter(x=>x.id!==item.id);buildSkillGroups();render();};
   d.querySelectorAll("[data-k]").forEach(inp=>bindText(inp,item,inp.dataset.k));return d;}
-function buildSkillGroups(){const w=$("#skillGroupList");w.innerHTML="";S.skillGroups.forEach(it=>w.appendChild(skillGroupEditor(it)));}
+function buildSkillGroups(){const w=$("#skillGroupList");w.innerHTML="";S.skillGroups.forEach((it,i)=>{const n=skillGroupEditor(it);addReorder(n,S.skillGroups,buildSkillGroups,it,i);w.appendChild(n);});}
 function syncSkillMode(){const grouped=S.skillMode==="grouped";
   $("#skillFlat").style.display=grouped?"none":"";
   $("#skillGrouped").style.display=grouped?"":"none";
@@ -418,6 +506,7 @@ $("#addSkillGroup").onclick=()=>{S.skillGroups.push({id:uid(),label:"",items:""}
 [["f_name","name"],["f_title","title"],["f_email","email"],["f_phone","phone"],["f_loc","loc"],["f_linkedin","linkedin"],["f_web","web"],["f_summary","summary"],["f_skills","skills"]].forEach(([id,k])=>{$("#"+id).addEventListener("input",e=>{S[k]=e.target.value;render();});});
 $("#f_font").addEventListener("change",e=>{S.font=e.target.value;render();});
 $("#f_accent").addEventListener("change",e=>{S.accent=e.target.value;render();});
+$("#f_template").addEventListener("change",e=>{S.template=e.target.value;const t=TP();S.font=t.font;S.accent=t.accent;syncInputs();render();});
 $("#addExp").onclick=()=>{S.exp.push({id:uid(),role:"",company:"",loc:"",start:"",end:"",current:false,bullets:""});buildExp();render();};
 $("#addEdu").onclick=()=>{S.edu.push({id:uid(),degree:"",school:"",loc:"",grad:"",details:""});buildEdu();render();};
 $("#addCert").onclick=()=>{S.cert.push({id:uid(),name:"",issuer:"",date:""});buildCert();render();};
@@ -426,11 +515,12 @@ $("#addProj").onclick=()=>{S.proj.push({id:uid(),name:"",stack:"",desc:""});buil
 document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
   document.querySelectorAll(".pane").forEach(x=>x.classList.remove("active"));
-  t.classList.add("active");$("#"+t.dataset.pane).classList.add("active");});
+  t.classList.add("active");$("#"+t.dataset.pane).classList.add("active");
+  if(t.dataset.pane==="paneResume")fitPreview();});
 
 /* ---- render resume ---- */
 const jobDateStr=it=>{const a=fmtMonth(it.start),b=it.current?"Present":fmtMonth(it.end);return a&&b?a+" – "+b:(a||b||"");};
-function renderResume(){const sh=$("#sheet");sh.dataset.font=S.font;sh.dataset.accent=S.accent||"black";let h="";
+function renderResume(){const sh=$("#sheet");sh.dataset.font=S.font;sh.dataset.accent=S.accent||"black";sh.dataset.template=S.template||"classic";let h="";
   h+=`<div class="r-name">${esc(S.name)||'<span class="r-empty">Your Name</span>'}</div>`;
   if(S.title)h+=`<div class="r-title">${esc(S.title)}</div>`;
   const cp=contactParts();
@@ -498,25 +588,111 @@ function renderChecks(){
   $("#checks").innerHTML=C.map(c=>`<span class="chkpill ${c[1]?'ok':'no'}"><span class="d"></span>${c[0]}</span>`).join("");}
 
 let raf=null;
-function render(){if(raf)cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>{renderResume();renderPlain();renderChecks();});}
+/* ---- bullet strength analyzer ---- */
+const STRONGV=new Set("accelerated achieved analyzed architected automated boosted built captured centralized championed closed consolidated converted created cut decreased delivered designed developed directed doubled drove earned eliminated enabled engineered established exceeded expanded forecasted generated grew halved implemented improved increased initiated instituted integrated introduced launched led managed mentored migrated modernized negotiated optimized orchestrated overhauled pioneered prioritized produced ramped rebuilt redesigned reduced refactored resolved restructured saved scaled secured shipped simplified slashed spearheaded standardized streamlined strengthened tripled won".split(" "));
+const WEAKV=new Set("responsible worked helped assisted tasked involved participated supported handled contributed various duties oversaw maintained".split(" "));
+const VSYN={managed:["Led","Directed","Oversaw","Headed"],led:["Directed","Drove","Spearheaded","Headed"],built:["Created","Developed","Engineered","Designed"],created:["Built","Developed","Designed","Launched"],developed:["Built","Designed","Engineered","Created"],improved:["Enhanced","Optimized","Strengthened","Boosted"],increased:["Grew","Boosted","Raised","Drove"],reduced:["Cut","Lowered","Decreased","Trimmed"],delivered:["Shipped","Produced","Launched","Drove"],designed:["Built","Architected","Developed","Created"],analyzed:["Assessed","Evaluated","Examined","Investigated"],supported:["Enabled","Drove","Assisted","Backed"],handled:["Managed","Owned","Resolved","Processed"],worked:["Partnered","Collaborated","Drove","Delivered"],responsible:["Led","Owned","Drove","Directed"],helped:["Enabled","Supported","Drove","Accelerated"]};
+function analyzeBullet(t){const b=(t||"").trim(),lc=b.toLowerCase();
+  const words=b.split(/\s+/).filter(Boolean),wc=words.length;
+  const fw=(words[0]||"").toLowerCase().replace(/[^a-z]/g,"");
+  const hasMetric=/\d/.test(b)||/[%$]/.test(b)||/\b(one|two|three|four|five|six|seven|eight|nine|ten|dozen|hundred|thousand|million|billion)\b/i.test(b);
+  const weakOpen=WEAKV.has(fw)||/^(responsible for|tasked with|duties included|helped to|worked on|in charge of|point of contact)/.test(lc);
+  const strongVerb=STRONGV.has(fw);
+  const tips=[];
+  if(!hasMetric)tips.push("Add a number — a %, $, count, or time saved makes the impact concrete.");
+  if(weakOpen)tips.push("Open with a strong action verb (Led, Built, Cut…)"+(WEAKV.has(fw)?" instead of \u201c"+fw+"\u201d.":"."));
+  else if(!strongVerb&&wc>=4)tips.push("Consider a punchier opening verb to lead with impact.");
+  if(wc>30)tips.push("Long ("+wc+" words) — tighten it or split into two points.");
+  if(wc>0&&wc<4)tips.push("Too thin — state what you did and the result.");
+  let rating="ok";
+  if(hasMetric&&strongVerb&&wc>=4&&wc<=30)rating="strong";
+  else if(wc<4||(!hasMetric&&(weakOpen||wc>30)))rating="weak";
+  return {text:b,rating,tips,hasMetric,strongVerb};}
+function renderBullets(){const out=$("#bulletRes");if(!out)return;
+  const groups=[];
+  S.exp.forEach(e=>{const bs=lines(e.bullets);if(bs.length)groups.push({src:(e.role||e.company||"Experience"),items:bs});});
+  S.proj.forEach(p=>{const bs=lines(p.desc);if(bs.length)groups.push({src:(p.name||"Project"),items:bs});});
+  if(!groups.length){out.innerHTML=`<div class="sub">Add bullet points under Work experience or Projects and they'll be graded here — one row per point, with a specific fix where it's weak.</div>`;return;}
+  let all=[];groups.forEach(g=>g.an=g.items.map(b=>{const a=analyzeBullet(b);all.push(a);return a;}));
+  const total=all.length,strong=all.filter(a=>a.rating==="strong").length,weak=all.filter(a=>a.rating==="weak").length,noNum=all.filter(a=>!a.hasMetric).length;
+  const sum=`<div class="blt-sum"><span class="blt-stat ${strong===total?'good':''}"><b>${strong}</b>/${total} strong</span>`+
+    (noNum?`<span class="blt-stat bad"><b>${noNum}</b> missing a number</span>`:`<span class="blt-stat good">all quantified</span>`)+
+    (weak?`<span class="blt-stat bad"><b>${weak}</b> need work</span>`:``)+`</div>`+
+    `<div class="sub" style="margin-bottom:6px">Strong = starts with an action verb <i>and</i> includes a number, in one tight line. Tap into Work experience to edit.</div>`;
+  // verb variety: flag opener words used 3+ times across all bullets
+  const openers={};all.forEach(a=>{const fw=(a.text.trim().split(/\s+/)[0]||"").toLowerCase().replace(/[^a-z]/g,"");if(fw&&fw.length>1)openers[fw]=(openers[fw]||0)+1;});
+  const rep=Object.entries(openers).filter(([k,n])=>n>=3).sort((a,b)=>b[1]-a[1]);
+  let vv;
+  if(rep.length){vv=`<div class="blt-vv warn"><b>Vary your opening verbs.</b> `+rep.map(([k,n])=>{
+      const alts=VSYN[k];return `\u201c${esc(k)}\u201d opens ${n} bullets`+(alts?` — try ${alts.slice(0,3).join(", ")}`:` — mix in other action verbs`)+".";}).join(" ")+
+      ` Repetition makes a resume read like a list of duties; varied verbs read like a track record.</div>`;}
+  else vv=`<div class="blt-vv good">\u2713 Good verb variety — no opening verb is overused.</div>`;
+  const body=groups.map(g=>`<div class="blt-src">${esc(g.src)}</div>`+g.an.map(a=>{
+    const tips=a.tips.length?`<ul class="blt-tips">${a.tips.map(t=>`<li>${esc(t)}</li>`).join("")}</ul>`:`<div class="blt-good">✓ Strong — action verb + measurable result.</div>`;
+    const label=a.rating==="strong"?"strong":a.rating==="weak"?"fix":"ok";
+    return `<div class="blt-row ${a.rating}"><div class="blt-top"><span class="blt-badge ${a.rating}">${label}</span><span class="blt-text">${esc(a.text)}</span></div>${tips}</div>`;
+  }).join("")).join("");
+  out.innerHTML=sum+vv+body;}
+
+let pvMode="fit";
+function fitPreview(){
+  const wrap=$(".sheet-wrap"),stage=$("#sheetStage"),sh=$("#sheet");
+  if(!wrap||!stage||!sh)return;
+  const avail=wrap.clientWidth-28; // minus .sheet-wrap left+right padding (14+14)
+  if(avail<=0)return; // pane hidden; will refit when shown
+  const scale=pvMode==="fit"?Math.min(1,avail/816):1;
+  sh.style.setProperty("--pv",scale);
+  stage.style.width=(816*scale)+"px";
+  stage.style.height=(sh.offsetHeight*scale)+"px";
+  // page-fit estimate from the rendered sheet (816×1056px = US Letter @96dpi, 0.75in margins)
+  const CT=1056-144,used=Math.max(0,sh.offsetHeight-144),pages=Math.max(1,Math.ceil(used/CT)),pg=$("#pgInfo");
+  if(pg){let txt,cls="good";
+    if(pages===1){txt=used<CT*0.5?"1 page · room for more":"Fits 1 page";cls="good";}
+    else if(pages===2){const over=used-CT,ln=Math.max(1,Math.round(over/19));txt=over<=170?("~"+ln+" line"+(ln>1?"s":"")+" over 1 page"):"~2 pages";cls="warn";}
+    else{txt="~"+pages+" pages";cls="warn";}
+    pg.textContent=txt;pg.className="pg "+cls;}
+}
+function render(){if(raf)cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>{renderResume();renderPlain();renderChecks();renderBullets();fitPreview();});}
+window.addEventListener("resize",fitPreview);
+window.addEventListener("load",()=>setTimeout(fitPreview,0));
+function setPvMode(m){pvMode=m;$("#pvFit").classList.toggle("active",m==="fit");$("#pvActual").classList.toggle("active",m==="actual");fitPreview();}
+$("#pvFit").onclick=()=>setPvMode("fit");
+$("#pvActual").onclick=()=>setPvMode("actual");
 
 /* ---- keyword scan ---- */
 const STOP=new Set("a an the and or but of to in on for with at by from as is are be will we you your our their this that it its into per via not have has had who whom which when where what why how all any can may must should would could role team work working experience years year ability strong excellent good great plus etc using use used able including include includes across well more most than then them they i us about over under within".split(/\s+/));
 const tokens=t=>t.toLowerCase().replace(/[^a-z0-9+#.\- ]/g," ").split(/\s+/).filter(w=>w.length>2&&!STOP.has(w)&&!/^\d+$/.test(w));
+function countOcc(hay,needle){if(!needle)return 0;let n=0,i=0;while((i=hay.indexOf(needle,i))!==-1){n++;i+=needle.length;}return n;}
+const titleCase=s=>s.replace(/\b([a-z])/g,(m,c)=>c.toUpperCase());
+function addSkill(term){term=(term||"").trim();if(!term)return;const disp=titleCase(term);
+  if(S.skillMode==="grouped"){
+    if(!S.skillGroups.length)S.skillGroups.push({id:uid(),label:"Skills",items:""});
+    const g=S.skillGroups[S.skillGroups.length-1];
+    if(grpItems(g).some(x=>x.toLowerCase()===term.toLowerCase()))return;
+    g.items=(g.items&&g.items.trim()?g.items.replace(/\s*$/,"")+", ":"")+disp;buildSkillGroups();
+  }else{
+    if(skillList().some(x=>x.toLowerCase()===term.toLowerCase()))return;
+    S.skills=(S.skills&&S.skills.trim()?S.skills.replace(/\s*$/,"")+", ":"")+disp;
+  }
+  syncInputs();render();}
 function scanKeywords(){const jd=$("#jd").value.trim(),out=$("#kwRes");
   if(!jd){out.innerHTML=`<div class="sub">Paste a job posting above, then scan.</div>`;return;}
   const freq={},toks=tokens(jd);toks.forEach(w=>freq[w]=(freq[w]||0)+1);
   for(let i=0;i<toks.length-1;i++){const bg=toks[i]+" "+toks[i+1];freq[bg]=(freq[bg]||0)+1.4;}
   const ranked=Object.entries(freq).filter(([k,v])=>v>=1.4||(!k.includes(" ")&&v>=1)).sort((a,b)=>b[1]-a[1]).map(x=>x[0]);
-  const picked=[],seen=new Set();for(const k of ranked){if(picked.length>=28)break;if(seen.has(k))continue;picked.push(k);seen.add(k);}
+  const picked=[],seen=new Set();for(const k of ranked){if(picked.length>=28)break;if(seen.has(k)||k.split(" ").some(w=>seen.has(w)))continue;picked.push(k);seen.add(k);}
   const resumeText=buildPlain().toLowerCase(),have=[],miss=[];
   picked.forEach(k=>{(resumeText.includes(k)?have:miss).push(k);});
   const cov=picked.length?Math.round(have.length/picked.length*100):0;
+  const stuffed=have.filter(k=>!k.includes(" ")&&countOcc(resumeText,k)>=5).sort((a,b)=>countOcc(resumeText,b)-countOcc(resumeText,a));
+  const warn=stuffed.length?`<div class="kw-warn">Possible over-use: ${stuffed.slice(0,3).map(k=>`<b>${esc(k)}</b> (${countOcc(resumeText,k)}×)`).join(", ")}. Repeating a term doesn't raise your rank — parsers count presence, and recruiters notice padding. Keep it natural.</div>`:"";
   out.innerHTML=`<div class="kw-cov"><span class="big" style="color:${cov>=70?'var(--accent-ink)':cov>=45?'var(--warn)':'var(--danger)'}">${cov}%</span>
     <span class="lbl">of the posting's key terms appear in your resume<br>(${have.length} of ${picked.length} matched)</span></div>
+    ${warn}
     <div class="kw-grp"><h4>✓ Matched (${have.length})</h4><div class="kw-tags">${have.length?have.map(k=>`<span class="kw-tag have">${esc(k)}</span>`).join(""):'<span class="sub">none yet</span>'}</div></div>
-    <div class="kw-grp"><h4>Missing — add where truthful (${miss.length})</h4><div class="kw-tags">${miss.length?miss.map(k=>`<span class="kw-tag miss">${esc(k)}</span>`).join(""):'<span class="sub">great coverage!</span>'}</div></div>
-    <div class="sub">Only add terms that honestly describe your experience. Use the posting's exact wording.</div>`;}
+    <div class="kw-grp"><h4>Missing — tap to add to Skills (${miss.length})</h4><div class="kw-tags">${miss.length?miss.map(k=>`<span class="kw-tag miss" data-kw="${esc(k)}" title="Add to Skills">${esc(k)}</span>`).join(""):'<span class="sub">great coverage!</span>'}</div></div>
+    <div class="sub">Tap a missing term only if it honestly describes your experience — it's added to your Skills (you can fix the wording there). Padding with untrue terms backfires in interviews.</div>`;}
+$("#kwRes").addEventListener("click",e=>{const t=e.target.closest(".kw-tag.miss");if(!t)return;addSkill(t.dataset.kw);scanKeywords();toast("Added to Skills");});
 $("#scanKw").onclick=scanKeywords;
 
 /* ---- download helper (sandbox-resilient) ----
@@ -548,7 +724,21 @@ $("#btnCopy").onclick=async()=>{const txt=buildPlain();
   try{await navigator.clipboard.writeText(txt);toast("Plain text copied to clipboard");}
   catch(e){const ta=document.createElement("textarea");ta.value=txt;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.focus();ta.select();
     try{document.execCommand("copy");toast("Plain text copied");}catch(_){toast("Couldn't copy — switch to the “What the ATS reads” tab and copy manually");}ta.remove();}};
-$("#btnSave").onclick=()=>{downloadBlob(new Blob([JSON.stringify({_app:"parserproof",_v:"1.4",...S},null,2)],{type:"application/json"}),(fileBase()||"resume")+"-draft.json",{title:"Draft ready",msg:"Tap to save your draft (a .json file you can re-open later)."});};
+$("#btnSave").onclick=()=>{downloadBlob(new Blob([JSON.stringify({_app:"parserproof",_v:"2.0",...S},null,2)],{type:"application/json"}),(fileBase()||"resume")+"-draft.json",{title:"Draft ready",msg:"Tap to save your draft (a .json file you can re-open later)."});};
+let cfFn=null;
+function confirmAction(title,msg,okLabel,onOk){$("#cfTitle").textContent=title;$("#cfMsg").textContent=msg;$("#cfOk").textContent=okLabel||"Confirm";cfFn=onOk;$("#cfPanel").classList.add("show");}
+function closeConfirm(){$("#cfPanel").classList.remove("show");cfFn=null;}
+$("#cfCancel").onclick=closeConfirm;
+$("#cfPanel").addEventListener("click",e=>{if(e.target.id==="cfPanel")closeConfirm();});
+$("#cfOk").onclick=()=>{const f=cfFn;closeConfirm();if(f)f();};
+function resetAll(){
+  Object.assign(S,{name:"",title:"",email:"",phone:"",loc:"",linkedin:"",web:"",font:"Calibri",accent:"black",template:"classic",summary:"",skills:"",skillMode:"flat",skillGroups:[],exp:[],edu:[],cert:[],proj:[]});
+  if($("#jd"))$("#jd").value="";
+  if($("#kwRes"))$("#kwRes").innerHTML='<div class="sub">Paste a job posting above, then scan.</div>';
+  syncInputs();buildExp();buildEdu();buildCert();buildProj();buildSkillGroups();syncSkillMode();render();
+  toast("Cleared — blank resume");
+}
+$("#btnReset").onclick=()=>confirmAction("Clear everything?","This wipes all the details you've entered and starts a blank resume. It can't be undone — save a draft first if you want to keep this version.","Yes, clear it",resetAll);
 $("#btnLoad").onclick=()=>$("#loadFile").click();
 $("#loadFile").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();
   r.onload=()=>{try{const d=JSON.parse(r.result);Object.assign(S,d);
@@ -559,7 +749,7 @@ $("#loadFile").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new F
     syncInputs();buildExp();buildEdu();buildCert();buildProj();buildSkillGroups();syncSkillMode();render();toast("Draft loaded");}
     catch(err){toast("Couldn't read that draft file");}};
   r.readAsText(f);e.target.value="";};
-function syncInputs(){$("#f_name").value=S.name||"";$("#f_title").value=S.title||"";$("#f_email").value=S.email||"";$("#f_phone").value=S.phone||"";$("#f_loc").value=S.loc||"";$("#f_linkedin").value=S.linkedin||"";$("#f_web").value=S.web||"";$("#f_summary").value=S.summary||"";$("#f_skills").value=S.skills||"";$("#f_font").value=S.font||"Calibri";$("#f_accent").value=S.accent||"black";if($("#skillToggle"))syncSkillMode();}
+function syncInputs(){$("#f_name").value=S.name||"";$("#f_title").value=S.title||"";$("#f_email").value=S.email||"";$("#f_phone").value=S.phone||"";$("#f_loc").value=S.loc||"";$("#f_linkedin").value=S.linkedin||"";$("#f_web").value=S.web||"";$("#f_summary").value=S.summary||"";$("#f_skills").value=S.skills||"";$("#f_font").value=S.font||"Calibri";$("#f_accent").value=S.accent||"black";if($("#f_template"))$("#f_template").value=S.template||"classic";if($("#skillToggle"))syncSkillMode();}
 
 /* ---- PDF (uses the browser's print -> Save as PDF) ---- */
 $("#btnPdf").onclick=()=>{
@@ -607,21 +797,22 @@ function run(text,o){o=o||{};const rpr=`<w:rPr><w:rFonts w:ascii="${S.font}" w:h
   `<w:sz w:val="${o.sz||HP(10.5)}"/><w:szCs w:val="${o.sz||HP(10.5)}"/></w:rPr>`;
   return `<w:r>${rpr}<w:t xml:space="preserve">${xesc(text)}</w:t></w:r>`;}
 function para(runsXml,o){o=o||{};let ppr='<w:pPr>';
-  if(o.heading)ppr+=`<w:pBdr><w:bottom w:val="single" w:sz="6" w:space="1" w:color="${ruleColor()}"/></w:pBdr>`;
+  if(o.heading&&TP().rule)ppr+=`<w:pBdr><w:bottom w:val="single" w:sz="6" w:space="1" w:color="${ruleColor()}"/></w:pBdr>`;
   if(o.tabRight)ppr+=`<w:tabs><w:tab w:val="right" w:pos="${o.tabRight}"/></w:tabs>`;
   ppr+=`<w:spacing w:before="${o.before||0}" w:after="${o.after==null?40:o.after}"/>`;
   if(o.bullet)ppr+='<w:ind w:left="360" w:hanging="240"/>';
+  if(o.align)ppr+=`<w:jc w:val="${o.align}"/>`;
   ppr+='</w:pPr>';
   return `<w:p>${ppr}${runsXml}</w:p>`;}
-function heading(t){return para(run(t.toUpperCase(),{b:true,sz:HP(11.5),color:headColor()}),{heading:true,before:220,after:80});}
+function heading(t){const c=TP().compact;return para(run(TP().upper?t.toUpperCase():t,{b:true,sz:HP(11.5),color:headColor()}),{heading:true,before:c?130:220,after:c?48:80});}
 function roleLine(l,r){return para(run(l,{b:true,sz:HP(11)})+(r?run("\t"+r,{sz:HP(10),color:"333333"}):""),{tabRight:10080,after:10});}
-function subLine(t){return para(run(t,{i:true,sz:HP(10.5),color:"222222"}),{after:30});}
-function bulletP(t){return para(run("• "+t,{sz:HP(10.5)}),{bullet:true,after:20});}
+function subLine(t){return para(run(t,{i:true,sz:HP(10.5),color:"222222"}),{after:TP().compact?20:30});}
+function bulletP(t){return para(run("• "+t,{sz:HP(10.5)}),{bullet:true,after:TP().compact?12:20});}
 
-function buildDocumentXml(){let b="";
-  b+=para(run(S.name||"Your Name",{b:true,sz:HP(20),color:isNavy()?NAVY:null}),{after:S.title?10:40});
-  if(S.title)b+=para(run(S.title,{sz:HP(12),color:"333333"}),{after:40});
-  const cp=contactParts();if(cp.length)b+=para(run(cp.join("   •   "),{sz:HP(10)}),{after:60});
+function buildDocumentXml(){let b="";const al=TP().align==="center"?"center":null;
+  b+=para(run(S.name||"Your Name",{b:true,sz:HP(TP().nameSz),color:isNavy()?NAVY:null}),{after:S.title?10:40,align:al});
+  if(S.title)b+=para(run(S.title,{sz:HP(12),color:"333333"}),{after:40,align:al});
+  const cp=contactParts();if(cp.length)b+=para(run(cp.join("   •   "),{sz:HP(10)}),{after:60,align:al});
   if(S.summary.trim()){b+=heading("Professional Summary");b+=para(run(S.summary.trim(),{sz:HP(10.5)}),{after:40});}
   const ents=skillEntries();if(ents.length){b+=heading("Skills");
     if(S.skillMode==="grouped")ents.forEach((e,i)=>{b+=para((e.label?run(e.label+": ",{b:true,sz:HP(10.5)}):"")+run(e.list.join(", "),{sz:HP(10.5)}),{after:i===ents.length-1?40:20});});
